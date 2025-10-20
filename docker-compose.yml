@@ -1,0 +1,48 @@
+version: '3.9'
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./data_ingestion/dataset.csv:/app/data_ingestion/dataset.csv:ro
+      - ./ml_model/model.pkl:/app/ml_model/model.pkl:ro
+      - ./apexinvest_advisor/config.py:/app/apexinvest_advisor/config.py:ro
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      - REACT_APP_BACKEND_URL=http://backend:8000
+    ports:
+      - "3000:80"
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=apexinvest
+      - POSTGRES_PASSWORD=apexinvest
+      - POSTGRES_DB=apexinvest_db
+    ports:
+      - "5432:5432"
+
+  mongodb:
+    image: mongo:6
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=apexinvest
+      - MONGO_INITDB_ROOT_PASSWORD=apexinvest
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    ports:
+      - "9000:9000"

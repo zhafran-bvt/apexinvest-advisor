@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apexinvest-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apexinvest-frontend
+  template:
+    metadata:
+      labels:
+        app: apexinvest-frontend
+    spec:
+      containers:
+        - name: frontend
+          # Build and push your own image based on frontend/Dockerfile.
+          image: apexinvest-frontend:latest
+          env:
+            - name: REACT_APP_BACKEND_URL
+              value: http://apexinvest-backend:8000
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apexinvest-frontend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: apexinvest-frontend

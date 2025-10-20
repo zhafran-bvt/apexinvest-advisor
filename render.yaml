@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: apexinvest-backend
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.backend
+    autoDeploy: true
+    healthCheckPath: /health
+    region: oregon
+    envVars:
+      - key: BACKEND_HOST
+        value: 0.0.0.0
+      - key: BACKEND_PORT
+        value: 8000
+      # Set API keys in Render dashboard as env vars (not here):
+      # - ALPHA_VANTAGE_API_KEY
+      # - NEWS_API_KEY
+      # - GNEWS_API_KEY
+

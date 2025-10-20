@@ -1,0 +1,29 @@
+# Backend container for ApexInvest Advisor (FastAPI)
+# - Builds from repo root so we can run ETL + training during build
+# - Produces an image that can boot without external assets
+
+FROM python:3.10-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install deps
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r /app/requirements.txt
+
+# Copy project source
+COPY . /app
+
+# Build-time: Try to precompute dataset + model (best-effort)
+# This speeds up first boot; if it fails, the app will generate on startup.
+RUN python data_ingestion/ingest.py || true \
+ && python ml_model/train_model.py || true
+
+EXPOSE 8000
+
+WORKDIR /app/backend
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+

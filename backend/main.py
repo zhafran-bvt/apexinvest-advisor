@@ -85,8 +85,23 @@ def load_model():
 
 
 # Load data and model at startup
-DATAFRAME = load_dataset()
-MODEL = load_model()
+try:
+    DATAFRAME = load_dataset()
+    MODEL = load_model()
+except FileNotFoundError:
+    # Generate dataset/model on-the-fly in container if missing
+    try:
+        from data_ingestion.ingest import main as _ingest_main
+        from ml_model.train_model import main as _train_main
+
+        _ingest_main()
+        _train_main()
+        DATAFRAME = load_dataset()
+        MODEL = load_model()
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to auto-generate dataset/model: {e}. Provide dataset.csv and model.pkl or ensure ETL/training succeed."
+        )
 
 FEATURE_COLUMNS = ["returns", "SMA_14", "EMA_14", "RSI_14", "sentiment"]
 

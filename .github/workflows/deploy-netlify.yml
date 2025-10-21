@@ -59,8 +59,33 @@ jobs:
           echo "REACT_APP_BACKEND_URL secret not set and no Render API secrets provided." >&2
           exit 1
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (ci with fallback)
+        run: |
+          set -e
+          npm --version
+          if npm ci; then
+            echo "npm ci succeeded"
+          else
+            echo "npm ci failed; falling back to npm install"
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Resolve Netlify Site ID
+        env:
+          NETLIFY_SITE_ID_SECRET: ${{ secrets.NETLIFY_SITE_ID }}
+          SITE_ID_SECRET: ${{ secrets.SITE_ID }}
+        run: |
+          set -euo pipefail
+          if [ -n "${NETLIFY_SITE_ID_SECRET}" ]; then
+            echo "Using NETLIFY_SITE_ID from secret"
+            echo "NETLIFY_SITE_ID=${NETLIFY_SITE_ID_SECRET}" >> $GITHUB_ENV
+          elif [ -n "${SITE_ID_SECRET}" ]; then
+            echo "Using SITE_ID secret as NETLIFY_SITE_ID"
+            echo "NETLIFY_SITE_ID=${SITE_ID_SECRET}" >> $GITHUB_ENV
+          else
+            echo "NETLIFY_SITE_ID secret missing (and SITE_ID fallback not provided)." >&2
+            exit 1
+          fi
 
       - name: Build React app
         env:
@@ -73,5 +98,5 @@ jobs:
       - name: Deploy to Netlify (production)
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ env.NETLIFY_SITE_ID }}
         run: netlify deploy --dir=build --prod --message "GitHub Actions deploy"

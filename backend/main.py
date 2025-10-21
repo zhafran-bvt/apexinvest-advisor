@@ -20,7 +20,32 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from apexinvest_advisor.config import CONFIG
+import os
+try:  # Prefer packaged config when available (repo root context)
+    from apexinvest_advisor.config import CONFIG as _PKG_CONFIG
+    CONFIG = _PKG_CONFIG
+except Exception:
+    # Fallback: build CONFIG from environment so backend can run even if
+    # apexinvest_advisor package isn't present in the image context.
+    def _get_env_config() -> dict:
+        return {
+            "alpha_vantage_api_key": os.getenv("ALPHA_VANTAGE_API_KEY", ""),
+            "news_api_key": os.getenv("NEWS_API_KEY", ""),
+            "gnews_api_key": os.getenv("GNEWS_API_KEY", ""),
+            "fred_api_key": os.getenv("FRED_API_KEY", ""),
+            "world_bank_api_key": os.getenv("WORLD_BANK_API_KEY", ""),
+            "postgres_uri": os.getenv("POSTGRES_URI", ""),
+            "mongodb_uri": os.getenv("MONGODB_URI", ""),
+            "redis_uri": os.getenv("REDIS_URI", ""),
+            "minio_endpoint": os.getenv("MINIO_ENDPOINT", ""),
+            "minio_access_key": os.getenv("MINIO_ACCESS_KEY", ""),
+            "minio_secret_key": os.getenv("MINIO_SECRET_KEY", ""),
+            "minio_bucket": os.getenv("MINIO_BUCKET", ""),
+            "backend_host": os.getenv("BACKEND_HOST", "0.0.0.0"),
+            "backend_port": int(os.getenv("BACKEND_PORT", "8000")),
+        }
+
+    CONFIG = _get_env_config()
 
 
 DATA_PATH = Path(__file__).resolve().parents[1] / "data_ingestion" / "dataset.csv"

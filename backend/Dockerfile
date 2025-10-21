@@ -23,10 +23,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # context is the project root and that the model and dataset have been
 # generated ahead of time.  Adjust these paths as necessary when
 # building locally or in your CI pipeline.
+# Copy the entire repo into /app so the backend, ETL, and model code are present.
+# We avoid copying from parent paths (..) to be compatible with remote builders.
 COPY . /app
-COPY ../ml_model/model.pkl /app/ml_model/model.pkl
-COPY ../data_ingestion/dataset.csv /app/data_ingestion/dataset.csv
-COPY ../config.py /app/apexinvest_advisor/config.py
 
 EXPOSE 8000
 

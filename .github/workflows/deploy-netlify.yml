@@ -59,6 +59,21 @@ jobs:
           echo "REACT_APP_BACKEND_URL secret not set and no Render API secrets provided." >&2
           exit 1
 
+      - name: Wait for backend readiness
+        env:
+          REACT_APP_BACKEND_URL: ${{ env.REACT_APP_BACKEND_URL }}
+        run: |
+          set -euo pipefail
+          URL="${REACT_APP_BACKEND_URL%/}/health"
+          echo "Waiting for backend to be healthy at: $URL"
+          for i in {1..40}; do
+            if curl -fsS "$URL" | grep -q '"status":"ok"'; then
+              echo "Backend is healthy."; exit 0
+            fi
+            echo "Not ready yet ($i/40); sleeping 15s..."; sleep 15
+          done
+          echo "Backend did not become ready in time." >&2; exit 1
+
       - name: Install dependencies (ci with fallback)
         run: |
           set -e
